@@ -23,27 +23,35 @@ class ProblemController extends Controller
 
     public function store(Request $request)
     {
-        $problem = Problem::create([
-            'question_text' => $request->input('question_text', '問題文を入力してください'),
-            'countdown_seconds' => $request->input('countdown_seconds', 60),
-        ]);
+        try {
+            $problem = Problem::create([
+                'question_text' => $request->input('question_text', '問題文を入力してください'),
+                'countdown_seconds' => $request->input('countdown_seconds', 60),
+            ]);
 
-        for ($i = 1; $i <= 10; $i++) {
-            $imagePath = null;
-            if ($request->hasFile("images.{$i}")) {
-                $imagePath = $request->file("images.{$i}")->store("problem-images/{$problem->id}", 'public');
+            for ($i = 1; $i <= 10; $i++) {
+                $imagePath = null;
+                $imageFiles = $request->file('images') ?? [];
+                if (!empty($imageFiles[$i]) && $imageFiles[$i]->isValid()) {
+                    $imagePath = $imageFiles[$i]->store("problem-images/{$problem->id}", 'public');
+                }
+
+                ProblemSlot::create([
+                    'problem_id' => $problem->id,
+                    'slot_number' => $i,
+                    'image_path' => $imagePath ?: null,
+                    'answer_text' => $request->input("slots.{$i}.answer_text", ''),
+                    'is_correct' => $request->boolean("slots.{$i}.is_correct"),
+                ]);
             }
 
-            ProblemSlot::create([
-                'problem_id' => $problem->id,
-                'slot_number' => $i,
-                'image_path' => $imagePath,
-                'answer_text' => $request->input("slots.{$i}.answer_text", ''),
-                'is_correct' => $request->boolean("slots.{$i}.is_correct"),
-            ]);
+            return redirect()->route('admin.problems.edit', $problem)->with('success', '問題を作成しました');
+        } catch (\Exception $e) {
+            \Log::error('Problem store error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', '保存中にエラーが発生しました: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.problems.edit', $problem)->with('success', '問題を作成しました');
     }
 
     public function edit(Problem $problem)

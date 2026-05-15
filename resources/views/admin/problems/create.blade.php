@@ -19,6 +19,12 @@
             <h1 class="text-2xl font-bold text-white">新しい問題を作成</h1>
         </div>
 
+        @if(session('error'))
+        <div class="bg-red-900 text-red-200 rounded-lg px-4 py-3 mb-6 text-sm font-mono break-all">
+            {{ session('error') }}
+        </div>
+        @endif
+
         <form action="{{ route('admin.problems.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
