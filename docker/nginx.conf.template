@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    server_name localhost;
+
+    # /sandbox/{repo-name}/ で配信（本番と同じパス構成）
+    location = /sandbox/{{REPO_NAME}} {
+        return 301 /sandbox/{{REPO_NAME}}/;
+    }
+    location ^~ /sandbox/{{REPO_NAME}}/ {
+        alias /var/www/html/public/;
+        index index.php;
+        try_files $uri @app_php;
+    }
+    location @app_php {
+        fastcgi_pass php:9000;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /var/www/html/public/index.php;
+        fastcgi_param SCRIPT_NAME /index.php;
+        # /sandbox/{{REPO_NAME}}/xxx → /xxx にリライトして Laravel に渡す
+        set $rewritten_uri $request_uri;
+        if ($request_uri ~ ^/sandbox/{{REPO_NAME}}(/.*)?$) {
+            set $rewritten_uri $1;
+        }
+        fastcgi_param REQUEST_URI $rewritten_uri;
+        fastcgi_param DOCUMENT_ROOT /var/www/html/public;
+    }
+
+    # ルートアクセスをリダイレクト
+    location = / {
+        return 301 /sandbox/{{REPO_NAME}}/;
+    }
+}

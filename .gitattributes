@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+
+public/css/app.css linguist-generated
+
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
