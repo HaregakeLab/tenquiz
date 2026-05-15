@@ -78,12 +78,16 @@
                                 </div>
                                 <label class="upload-zone block text-center text-xs text-gray-500 hover:text-gray-300 px-2 py-1 cursor-pointer">
                                     <input type="file" accept="image/*" class="hidden"
-                                           onchange="uploadImage(this, {{ $problem->id }}, {{ $slot->id }}, {{ $slot->slot_number }})">
+                                           data-upload-url="{{ route('admin.problems.slots.image.upload', [$problem, $slot]) }}"
+                                           data-slot="{{ $slot->slot_number }}"
+                                           onchange="uploadImage(this)">
                                     画像を変更
                                 </label>
                                 @if($slot->image_path)
                                 <button type="button"
-                                        onclick="deleteImage({{ $problem->id }}, {{ $slot->id }}, {{ $slot->slot_number }})"
+                                        data-delete-url="{{ route('admin.problems.slots.image.delete', [$problem, $slot]) }}"
+                                        data-slot="{{ $slot->slot_number }}"
+                                        onclick="deleteImage(this)"
                                         class="w-full text-xs text-red-500 hover:text-red-400 mt-1">
                                     削除
                                 </button>
@@ -139,16 +143,15 @@
 <script>
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
-async function uploadImage(input, problemId, slotId, slotNum) {
+async function uploadImage(input) {
     if (!input.files[0]) return;
+    const slotNum = input.dataset.slot;
+    const url = input.dataset.uploadUrl;
     const formData = new FormData();
     formData.append('image', input.files[0]);
     formData.append('_token', CSRF);
 
-    const res = await fetch(`/admin/problems/${problemId}/slots/${slotId}/image`, {
-        method: 'POST',
-        body: formData,
-    });
+    const res = await fetch(url, { method: 'POST', body: formData });
     const data = await res.json();
     if (data.url) {
         const container = document.getElementById(`img-${slotNum}`);
@@ -156,9 +159,11 @@ async function uploadImage(input, problemId, slotId, slotNum) {
     }
 }
 
-async function deleteImage(problemId, slotId, slotNum) {
+async function deleteImage(btn) {
     if (!confirm('画像を削除しますか？')) return;
-    const res = await fetch(`/admin/problems/${problemId}/slots/${slotId}/image`, {
+    const slotNum = btn.dataset.slot;
+    const url = btn.dataset.deleteUrl;
+    const res = await fetch(url, {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' },
     });
@@ -171,6 +176,7 @@ async function deleteImage(problemId, slotId, slotNum) {
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
         </div>`;
+        btn.remove();
     }
 }
 </script>
