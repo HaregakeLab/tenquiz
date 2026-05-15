@@ -7,6 +7,7 @@ location ^~ /sandbox/{{REPO_NAME}}/ {
     # 誰でもアクセス可にしたい場合は、下のコメントを外してください。
     # 注: 下の @{{REPO_NAME}}_php 側にも同じ設定が必要です（named location は親から継承しません）。
     # auth_request off;
+    client_max_body_size 50M;
     include /etc/nginx/snippets/security-headers.conf;
     alias /var/www/apps/{{REPO_NAME}}/public/;
     index index.php;
