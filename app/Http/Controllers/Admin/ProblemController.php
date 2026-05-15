@@ -29,9 +29,15 @@ class ProblemController extends Controller
         ]);
 
         for ($i = 1; $i <= 10; $i++) {
+            $imagePath = null;
+            if ($request->hasFile("images.{$i}")) {
+                $imagePath = $request->file("images.{$i}")->store("problem-images/{$problem->id}", 'public');
+            }
+
             ProblemSlot::create([
                 'problem_id' => $problem->id,
                 'slot_number' => $i,
+                'image_path' => $imagePath,
                 'answer_text' => $request->input("slots.{$i}.answer_text", ''),
                 'is_correct' => $request->boolean("slots.{$i}.is_correct"),
             ]);
